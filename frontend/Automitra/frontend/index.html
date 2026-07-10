@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoMitra - Smart Ride Pooling</title>
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
+    font-family:'Segoe UI',sans-serif;
+    min-height:100vh;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+
+    margin:0;
+    position:relative;
+    overflow-x:hidden;
+}
+
+/* Blurred Background Image */
+body::before{
+    content:"";
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+
+    background:url("auto.png") no-repeat center center;
+    background-size:cover;
+
+    filter:blur(2px);
+    transform:scale(1.08);
+
+    z-index:-2;
+}
+
+/* Transparent Overlay */
+body::after{
+    content:"";
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+
+    background:rgba(0,0,0,0.20);
+
+    z-index:-1;
+}
+
+.overlay{
+    position:relative;
+    z-index:1;
+    width:460px;
+    background:rgba(255,255,255,0.92);
+    padding:25px;
+    border-radius:18px;
+    box-shadow:0 10px 25px rgba(0,0,0,.25);
+    text-align:center;
+    animation:fadeIn .6s ease;
+}
+
+        @keyframes fadeIn{
+            from{
+                opacity:0;
+                transform:translateY(20px);
+            }
+            to{
+                opacity:1;
+                transform:translateY(0);
+            }
+        }
+
+        h1{
+            color:#16b55f;
+            margin-bottom:8px;
+            font-size:32px;
+        }
+
+        h2{
+            color:#444;
+            margin-bottom:18px;
+            font-size:20px;
+        }
+
+        .vehicle-type{
+            margin:15px 0;
+        }
+
+        .vehicle-type button{
+            padding:10px 15px;
+            margin:5px;
+            border:none;
+            border-radius:10px;
+            background:#f2f2f2;
+            cursor:pointer;
+            font-weight:bold;
+            transition:.3s;
+        }
+
+        .vehicle-type button:hover{
+            background:#d8f5e5;
+        }
+
+        .vehicle-type .selected{
+            background:#16b55f;
+            color:#fff;
+        }
+
+        .input-group{
+            display:flex;
+            gap:8px;
+            margin:12px 0;
+        }
+
+        .input-group input{
+            flex:1;
+        }
+
+        input,
+        select{
+            width:100%;
+            padding:12px;
+            border:1px solid #ccc;
+            border-radius:10px;
+            margin:8px 0;
+            font-size:15px;
+            outline:none;
+        }
+
+        input:focus,
+        select:focus{
+            border-color:#16b55f;
+        }
+
+        .input-group button{
+            width:55px;
+            border:none;
+            border-radius:10px;
+            background:#16b55f;
+            color:#fff;
+            cursor:pointer;
+            font-size:18px;
+        }
+
+        #findRide,
+        #shareRideBtn{
+            width:100%;
+            padding:12px;
+            margin-top:10px;
+            border:none;
+            border-radius:10px;
+            background:#16b55f;
+            color:white;
+            font-size:16px;
+            font-weight:bold;
+            cursor:pointer;
+            transition:.3s;
+        }
+
+        #shareRideBtn{
+            background:#0b7dda;
+        }
+
+        #findRide:hover{
+            background:#11914d;
+        }
+
+        #shareRideBtn:hover{
+            background:#0868b4;
+        }
+
+        .rides-list{
+            margin-top:20px;
+            text-align:left;
+        }
+
+        .ride-item{
+            background:#f7fff8;
+            border-radius:10px;
+            padding:12px;
+            margin-bottom:12px;
+            box-shadow:0 3px 8px rgba(0,0,0,.1);
+        }
+
+        .fare{
+            color:#16b55f;
+            font-weight:bold;
+            margin-top:5px;
+        }
+
+        .book-btn{
+            margin-top:8px;
+            padding:8px 12px;
+            border:none;
+            border-radius:8px;
+            background:#16b55f;
+            color:#fff;
+            cursor:pointer;
+        }
+
+        .book-btn:hover{
+            background:#11914d;
+        }
+
+        .charge-info{
+            color:#0b7dda;
+            font-weight:bold;
+            margin-top:5px;
+        }
+
+        #shareModal{
+            display:none;
+            position:fixed;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            background:rgba(0,0,0,.5);
+            justify-content:center;
+            align-items:center;
+            z-index:999;
+        }
+
+        #shareModal div{
+            width:420px;
+            background:#fff;
+            border-radius:15px;
+            padding:20px;
+        }
+
+        #submitRideBtn{
+            background:#16b55f;
+            color:#fff;
+        }
+
+        #cancelRideBtn{
+            background:#dc3545;
+            color:white;
+        }
+
+        #shareModal button{
+            width:100%;
+            padding:10px;
+            margin-top:8px;
+            border:none;
+            border-radius:10px;
+            cursor:pointer;
+            font-size:15px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<div class="overlay">
+
+    <h1>🚐 Welcome to AutoMitra</h1>
+    <h2>Smart Ride Pooling 🚗</h2>
+
+    <!-- Vehicle Selection -->
+    <div class="vehicle-type">
+        <button id="autoBtn" class="selected">🚐 Auto</button>
+        <button id="eAutoBtn">⚡ Electric Auto</button>
+        <button id="carBtn">🚗 Car</button>
+    </div>
+
+    <!-- Pickup -->
+    <div class="input-group">
+        <input
+            type="text"
+            id="pickup"
+            placeholder="📍 Pickup Location">
+
+        <button onclick="getCurrentLocation()">📍</button>
+    </div>
+
+    <!-- Drop -->
+    <input
+        type="text"
+        id="drop"
+        placeholder="🧭 Drop Location">
+
+    <!-- Buttons -->
+    <button id="findRide" onclick="findRides()">
+        🔍 Find Rides
+    </button>
+
+    <button id="shareRideBtn" onclick="openShareModal()">
+        ➕ Share a Ride
+    </button>
+
+    <!-- Ride Results -->
+    <div id="ridesList" class="rides-list"></div>
+
+</div>
+
+<!-- Share Ride Popup -->
+
+<div id="shareModal">
+
+    <div>
+
+        <h2>Share Your Ride</h2>
+
+        <input
+            type="text"
+            id="sPickup"
+            placeholder="Pickup">
+
+        <input
+            type="text"
+            id="sDrop"
+            placeholder="Drop">
+
+        <select
+            id="sVehicle"
+            onchange="toggleChargeInput()">
+
+            <option value="">
+                Select Vehicle
+            </option>
+
+            <option value="Auto">
+                🚐 Auto
+            </option>
+
+            <option value="Electric Auto">
+                ⚡ Electric Auto
+            </option>
+
+            <option value="Car">
+                🚗 Car
+            </option>
+
+        </select>
+
+        <input
+            type="text"
+            id="sOwner"
+            placeholder="Your Name">
+
+        <input
+            type="text"
+            id="sPhone"
+            placeholder="Phone Number">
+
+        <input
+            type="number"
+            id="sSeats"
+            placeholder="Available Seats"
+            min="1">
+
+        <input
+            type="text"
+            id="sVehicleNo"
+            placeholder="Vehicle Number">
+
+        <input
+            type="number"
+            id="sCharge"
+            placeholder="Battery Charge %"
+            min="20"
+            max="100"
+            style="display:none;">
+
+        <button
+            id="submitRideBtn"
+            onclick="submitShareRide()">
+            Submit Ride
+        </button>
+
+        <button
+            id="cancelRideBtn"
+            onclick="closeShareModal()">
+            Cancel
+        </button>
+
+    </div>
+
+</div>
+
+<script>
+const vehicles = {
+    Auto: {
+        baseFare: 20,
+        perKm: 8,
+        capacity: 3
+    },
+    "Electric Auto": {
+        baseFare: 15,
+        perKm: 6,
+        capacity: 3
+    },
+    Car: {
+        baseFare: 40,
+        perKm: 10,
+        capacity: 4
+    }
+};
+
+let rideDataList = [];
+let sharedRides = [];
+
+// Vehicle Selection
+
+document.getElementById("autoBtn").onclick = () => {
+    selectVehicle("Auto");
+};
+
+document.getElementById("eAutoBtn").onclick = () => {
+    selectVehicle("Electric Auto");
+};
+
+document.getElementById("carBtn").onclick = () => {
+    selectVehicle("Car");
+};
+
+function selectVehicle(type){
+
+    document.getElementById("autoBtn").classList.remove("selected");
+    document.getElementById("eAutoBtn").classList.remove("selected");
+    document.getElementById("carBtn").classList.remove("selected");
+
+    if(type==="Auto")
+        document.getElementById("autoBtn").classList.add("selected");
+
+    if(type==="Electric Auto")
+        document.getElementById("eAutoBtn").classList.add("selected");
+
+    if(type==="Car")
+        document.getElementById("carBtn").classList.add("selected");
+}
+
+// Current Location
+
+function getCurrentLocation(){
+
+    if(navigator.geolocation){
+
+        navigator.geolocation.getCurrentPosition(
+
+            function(position){
+
+                const lat = position.coords.latitude.toFixed(5);
+                const lng = position.coords.longitude.toFixed(5);
+
+                document.getElementById("pickup").value =
+                `Current Location (${lat}, ${lng})`;
+
+            },
+
+            function(){
+
+                alert("Unable to get location.");
+
+            }
+
+        );
+
+    }
+    else{
+
+        alert("Geolocation not supported.");
+
+    }
+
+}
+
+// Electric Auto Charge Input
+
+function toggleChargeInput(){
+
+    const vehicle =
+    document.getElementById("sVehicle").value;
+
+    if(vehicle==="Electric Auto"){
+
+        document.getElementById("sCharge").style.display="block";
+
+    }
+    else{
+
+        document.getElementById("sCharge").style.display="none";
+
+    }
+
+}
+
+// Find Rides
+
+async function findRides(){
+
+    const pickup =
+    document.getElementById("pickup").value;
+
+    const drop =
+    document.getElementById("drop").value;
+
+    if(!pickup || !drop){
+
+        alert("Please enter pickup and drop location.");
+
+        return;
+
+    }
+
+    let vehicleType="Auto";
+
+    if(document.getElementById("eAutoBtn").classList.contains("selected"))
+        vehicleType="Electric Auto";
+
+    if(document.getElementById("carBtn").classList.contains("selected"))
+        vehicleType="Car";
+
+    const response = await fetch("http://localhost:5000/findRides",{
+
+        method:"POST",
+
+        headers:{
+            "Content-Type":"application/json"
+        },
+
+        body:JSON.stringify({
+            pickup,
+            drop,
+            vehicleType
+        })
+
+    });
+
+    const data = await response.json();
+
+    rideDataList = data.rides;
+
+    displayRides();
+
+}
+function displayRides() {
+
+    const ridesList = document.getElementById("ridesList");
+    ridesList.innerHTML = "";
+
+    rideDataList.forEach((ride, index) => {
+
+        const rideDiv = document.createElement("div");
+        rideDiv.className = "ride-item";
+
+        let extraInfo = "";
+
+        if (ride.type === "Electric Auto") {
+
+            extraInfo = `
+                <div class="charge-info">
+                    🔋 Battery : ${ride.charge}% <br>
+                    🚗 Max Distance : ${ride.maxDistance} km
+                </div>
+            `;
+
+        }
+
+        rideDiv.innerHTML = `
+            <b>${ride.driver || ride.owner}</b><br>
+
+            📞 ${ride.phone}<br>
+
+            🚘 ${ride.vehicleNo}<br>
+
+            ⭐ Rating : ${ride.rating}<br>
+
+            📍 Distance : ${ride.distance} km<br>
+
+            💰 Fare : ₹${ride.fare}<br>
+
+            ⏱ ETA : ${ride.eta} mins<br>
+
+            👥 Seats :
+            <span class="seats">
+            ${ride.capacity-ride.passengers}/${ride.capacity}
+            </span>
+
+            ${extraInfo}
+
+            <br>
+
+            <button
+            class="book-btn"
+            onclick="bookRide(${index})">
+
+            Book Ride
+
+            </button>
+        `;
+
+        ridesList.appendChild(rideDiv);
+
+    });
+
+}
+
+async function bookRide(index){
+
+    const response = await fetch("http://localhost:5000/bookRide",{
+
+        method:"POST",
+
+        headers:{
+            "Content-Type":"application/json"
+        },
+
+        body:JSON.stringify({
+
+            rideIndex:index
+
+        })
+
+    });
+
+    const data = await response.json();
+
+    if(!data.success){
+
+        alert(data.message);
+
+        return;
+
+    }
+
+    localStorage.setItem(
+
+        "bookedRide",
+
+        JSON.stringify(data.ride)
+
+    );
+
+    alert("Ride Booked Successfully!");
+
+    window.location.href="tracking.html";
+
+}   
+// Open Share Ride Modal
+function openShareModal() {
+    document.getElementById("shareModal").style.display = "flex";
+}
+
+// Close Share Ride Modal
+function closeShareModal() {
+    document.getElementById("shareModal").style.display = "none";
+}
+
+// Submit Shared Ride
+async function submitShareRide() {
+
+    const pickup = document.getElementById("sPickup").value;
+    const drop = document.getElementById("sDrop").value;
+    const vehicleType = document.getElementById("sVehicle").value;
+    const owner = document.getElementById("sOwner").value;
+    const phone = document.getElementById("sPhone").value;
+    const seats = document.getElementById("sSeats").value;
+    const vehicleNo = document.getElementById("sVehicleNo").value;
+    const charge = document.getElementById("sCharge").value;
+   
+    if (!pickup || !drop || !vehicleType || !owner || !phone || !seats) {
+        alert("Please fill all fields.");
+        return;
+    }
+
+    const response = await fetch("http://localhost:5000/shareRide", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+            pickup,
+            drop,
+            vehicleType,
+            owner,
+            phone,
+            seats,
+            vehicleNo,
+            charge
+        })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+
+        alert(data.message);
+
+        closeShareModal();
+
+        document.getElementById("sPickup").value = "";
+        document.getElementById("sDrop").value = "";
+        document.getElementById("sVehicle").value = "";
+        document.getElementById("sOwner").value = "";
+        document.getElementById("sPhone").value = "";
+        document.getElementById("sSeats").value = "";
+        document.getElementById("sCharge").value = "";
+
+    } else {
+
+        alert(data.message);
+
+    }
+
+}
+
+// Default Vehicle
+selectVehicle("Auto");    
+ 
+</script>
+</body>
+</html>

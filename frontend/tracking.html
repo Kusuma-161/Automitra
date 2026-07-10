@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>🚐 AutoMitra - Ride Tracking</title>
+
+<link
+rel="stylesheet"
+href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+
+    font-family:'Segoe UI',sans-serif;
+
+    min-height:100vh;
+
+    background-image:url("auto.png");
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+    background-attachment:fixed;
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+
+    position:relative;
+
+}
+
+body::before{
+
+    content:"";
+
+    position:fixed;
+
+    inset:0;
+
+    background:rgba(255,255,255,.25);
+
+    z-index:0;
+
+}
+
+.info{
+
+    position:relative;
+
+    z-index:1;
+
+    margin-top:20px;
+
+    width:90%;
+    max-width:700px;
+
+    background:rgba(255,255,255,.92);
+
+    border-radius:18px;
+
+    padding:20px;
+
+    text-align:center;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.25);
+
+}
+
+.info h2{
+
+    color:#1fda6a;
+
+    margin-bottom:10px;
+
+}
+
+.info p{
+
+    margin:8px 0;
+
+    font-size:16px;
+
+}
+
+.btn{
+
+    padding:10px 18px;
+
+    border:none;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+    background:#1fda6a;
+
+    color:white;
+
+    font-weight:bold;
+
+    margin:5px;
+
+    transition:.3s;
+
+}
+
+.btn:hover{
+
+    background:#16b55f;
+
+}
+
+.sos{
+
+    background:#e53935;
+
+}
+
+.sos:hover{
+
+    background:#c62828;
+
+}
+
+.select-payment{
+
+    margin-top:10px;
+
+    padding:10px;
+
+    border-radius:10px;
+
+    width:220px;
+
+}
+
+.reached{
+
+    color:red;
+
+    font-weight:bold;
+
+    margin-top:10px;
+
+}
+
+#map{
+
+    position:relative;
+
+    z-index:1;
+
+    width:90%;
+
+    max-width:900px;
+
+    height:60vh;
+
+    margin-top:20px;
+
+    border-radius:15px;
+
+    overflow:hidden;
+
+    box-shadow:0 10px 20px rgba(0,0,0,.25);
+
+}
+
+</style>
+
+</head>
+
+<body>
+<div class="info">
+
+    <h2>🚐 Ride Details</h2>
+
+    <p id="personName"><b>Name:</b></p>
+
+    <p id="personPhone"><b>Phone:</b></p>
+
+    <p id="vehicleNo"><b>Vehicle:</b></p>
+
+    <p id="eta"><b>ETA:</b></p>
+
+    <p id="fare"><b>Fare:</b></p>
+
+    <button class="btn" onclick="callPerson()">
+        📞 Call Driver
+    </button>
+
+    <button class="btn sos" onclick="sos()">
+        🚨 SOS
+    </button>
+
+    <br><br>
+
+    <label><b>Pay Now</b></label>
+
+    <br>
+
+    <select
+        id="paymentSelect"
+        class="select-payment"
+        onchange="pay(this.value)">
+
+        <option value="">
+            Select Payment Method
+        </option>
+
+        <option value="PhonePe">
+            PhonePe
+        </option>
+
+        <option value="Google Pay">
+            Google Pay
+        </option>
+
+        <option value="Paytm">
+            Paytm
+        </option>
+
+        <option value="BHIM">
+            BHIM UPI
+        </option>
+
+    </select>
+
+    <p id="status" class="reached"></p>
+
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+// Get booked ride data
+let rideData = JSON.parse(localStorage.getItem("bookedRide"));
+
+if (!rideData) {
+    alert("No ride booked!");
+    window.location.href = "index.html";
+}
+
+// Display Ride Details
+
+if (rideData.driver) {
+    document.getElementById("personName").innerHTML =
+        "<b>Driver:</b> " + rideData.driver;
+} else {
+    document.getElementById("personName").innerHTML =
+        "<b>Owner:</b> " + rideData.owner;
+}
+
+document.getElementById("personPhone").innerHTML =
+    "<b>Phone:</b> " + rideData.phone;
+
+document.getElementById("vehicleNo").innerHTML =
+    "<b>Vehicle:</b> " + rideData.vehicleNo;
+
+document.getElementById("eta").innerHTML =
+    "<b>ETA:</b> " + rideData.eta + " mins";
+
+document.getElementById("fare").innerHTML =
+    "<b>Fare:</b> ₹" + rideData.fare;
+
+
+// Call Driver
+
+function callPerson() {
+
+    window.location.href = "tel:" + rideData.phone;
+
+}
+
+
+// SOS
+
+async function sos() {
+
+    const res = await fetch("http://localhost:5000/sos", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+            ride: rideData
+        })
+
+    });
+
+    const data = await res.json();
+
+    alert(data.message);
+
+}
+
+
+// Payment
+
+function pay(method) {
+
+    if (method === "")
+        return;
+
+    alert("Payment Successful using " + method + " ✅");
+
+    document.getElementById("status").innerHTML =
+        "✔ Payment Completed";
+
+}
+// ---------- Leaflet Map ----------
+
+const map = L.map("map");
+
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+}).addTo(map);
+
+// Get user's current location
+map.locate({
+    setView: true,
+    maxZoom: 16
+});
+
+// Location found
+function onLocationFound(e) {
+
+    const userLat = e.latlng.lat;
+    const userLng = e.latlng.lng;
+
+    // Pickup Marker
+    L.marker([userLat, userLng])
+        .addTo(map)
+        .bindPopup("📍 Your Location")
+        .openPopup();
+
+    // Fake Driver Starting Point
+    let driverLat = userLat + 0.01;
+    let driverLng = userLng + 0.01;
+
+    const driverIcon = L.icon({
+        iconUrl: "https://cdn-icons-png.flaticon.com/512/854/854878.png",
+        iconSize: [40, 40]
+    });
+
+    const driverMarker = L.marker(
+        [driverLat, driverLng],
+        {
+            icon: driverIcon
+        }
+    ).addTo(map);
+
+    driverMarker.bindPopup("🚐 Driver").openPopup();
+
+    // Route Line
+    const route = L.polyline(
+        [
+            [driverLat, driverLng],
+            [userLat, userLng]
+        ],
+        {
+            color: "green",
+            weight: 5
+        }
+    ).addTo(map);
+
+    // Driver Animation
+    let steps = 50;
+    let current = 0;
+
+    const latStep = (userLat - driverLat) / steps;
+    const lngStep = (userLng - driverLng) / steps;
+
+    const timer = setInterval(() => {
+
+        driverLat += latStep;
+        driverLng += lngStep;
+
+        driverMarker.setLatLng([driverLat, driverLng]);
+
+        route.setLatLngs([
+            [driverLat, driverLng],
+            [userLat, userLng]
+        ]);
+
+        current++;
+
+        if (current >= steps) {
+
+            clearInterval(timer);
+
+            driverMarker.bindPopup("✅ Driver Arrived")
+                .openPopup();
+
+            document.getElementById("status").innerHTML =
+                "🚐 Driver has reached your location.";
+
+        }
+
+    }, 1000);
+
+}
+
+map.on("locationfound", onLocationFound);
+
+map.on("locationerror", function () {
+
+    alert("Unable to get your location.");
+
+});
+</script>
+
+</body>
+
+</html>

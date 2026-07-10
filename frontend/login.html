@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoMitra Login</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Segoe UI',sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    /* Light Pink + Sky Blue */
+    background:
+    linear-gradient(
+        135deg,
+        #ffd6e7 0%,
+        #ffeaf4 30%,
+        #d9f2ff 70%,
+        #bfe8ff 100%
+    );
+
+    position:relative;
+}
+body::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:rgba(255,255,255,0.08);
+}
+
+.container{
+    position:relative;
+    z-index:1;
+    width:380px;
+    background:rgba(255,255,255,0.72);
+    backdrop-filter:blur(12px);
+    padding:30px;
+    border-radius:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,.3);
+    text-align:center;
+}
+
+h1{
+    color:#17b978;
+    margin-bottom:10px;
+}
+
+p{
+    color:#444;
+    margin-bottom:20px;
+}
+
+h2{
+    margin:15px 0 10px;
+    color:#333;
+}
+
+input{
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    border:1px solid #ccc;
+    border-radius:10px;
+    outline:none;
+    font-size:15px;
+}
+
+input:focus{
+    border-color:#17b978;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    background:#17b978;
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    font-size:16px;
+    cursor:pointer;
+    transition:.3s;
+}
+
+button:hover{
+    background:#139b65;
+}
+
+.or{
+    margin:20px 0;
+    color:#666;
+    font-weight:bold;
+}
+
+.footer{
+    margin-top:20px;
+    color:#666;
+    font-size:13px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🚐 AutoMitra</h1>
+
+<p>Eco-Friendly Ride Pooling<br>Save Fuel • Save Money • Save Planet 🌍</p>
+
+<h2>Login</h2>
+
+<input
+type="text"
+id="phone"
+placeholder="Phone Number">
+
+<input
+type="password"
+id="password"
+placeholder="Password">
+
+<button onclick="login()">
+Login
+</button>
+
+<div class="or">──────── OR ────────</div>
+
+<h2>Create Account</h2>
+
+<input
+type="text"
+id="sname"
+placeholder="Full Name">
+
+<input
+type="text"
+id="sphone"
+placeholder="Phone Number">
+
+<input
+type="password"
+id="spass"
+placeholder="Password">
+
+<button onclick="signup()">
+Signup
+</button>
+
+<div class="footer">
+© 2025 AutoMitra. All Rights Reserved.
+</div>
+
+</div>
+
+<script>
+
+async function signup(){
+
+const name=document.getElementById("sname").value.trim();
+const phone=document.getElementById("sphone").value.trim();
+const password=document.getElementById("spass").value.trim();
+
+if(!name||!phone||!password){
+alert("Please fill all fields");
+return;
+}
+
+try{
+
+const res=await fetch("http://localhost:5000/signup",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+name,
+phone,
+password
+})
+
+});
+
+const data=await res.json();
+
+alert(data.message);
+
+if(data.success){
+
+localStorage.setItem("user",JSON.stringify({
+name,
+phone
+}));
+
+window.location.href="index.html";
+
+}
+
+}catch(err){
+
+alert("Server not running!");
+
+}
+
+}
+
+async function login(){
+
+const phone=document.getElementById("phone").value.trim();
+
+const password=document.getElementById("password").value.trim();
+
+if(!phone||!password){
+
+alert("Enter phone and password");
+
+return;
+
+}
+
+try{
+
+const res=await fetch("http://localhost:5000/login",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+phone,
+password
+})
+
+});
+
+const data=await res.json();
+
+alert(data.message);
+
+if(data.success){
+
+localStorage.setItem("user",JSON.stringify(data.user));
+
+window.location.href="index.html";
+
+}
+
+}catch(err){
+
+alert("Server not running!");
+
+}
+
+}
+
+</script>
+
+</body>
+</html>
