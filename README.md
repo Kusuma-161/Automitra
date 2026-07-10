@@ -89,3 +89,29 @@ AutoMitra follows a client-server architecture.
 
 - **Data Storage (JSON Files)**
   - Stores user information and ride-related data.
+
+## Screenshots
+
+### Home Page
+![Home Page](index.png)
+
+### Login Page
+![Login Page](login.png)
+
+### Find Rides
+![Find Rides](find.png)
+
+### Ride Sharing
+![Ride Sharing](share.png)
+
+### Shared Ride Details
+![Shared Ride Details](shared.png)
+
+### Book Ride
+![Book Ride](bookride.png)
+
+### Driver Arrived
+![Driver Arrived](driverarrived.png)
+
+### SOS Safety Feature
+![SOS Safety Feature](sos.png)
