@@ -92,11 +92,12 @@ AutoMitra follows a client-server architecture.
 
 ## Screenshots
 
+### Login Page
+![Login Page](login.png)
+
 ### Home Page
 ![Home Page](index.png)
 
-### Login Page
-![Login Page](login.png)
 
 ### Find Rides
 ![Find Rides](find.png)
