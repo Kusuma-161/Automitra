@@ -54,8 +54,6 @@ AutoMitra allows users to update their travel details and find available rides f
 
 ## Future Enhancements
 
- Live GPS tracking
- Online payment integration
  AI-based route matching
  Rating and review system
  Real-time ride notifications
